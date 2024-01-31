@@ -1,10 +1,10 @@
-# VERSION 1.0
+# VERSION 1.01
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/update.py
 import urequests
 import os
 
 for allfiles in os.listdir():
-    if not os.path.isfile(allfiles):
+    if not allfiles.endswith('.py'):
         continue
     oldversion = None
     url = None
