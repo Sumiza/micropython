@@ -1,4 +1,4 @@
-# VERSION 1.01
+# VERSION 1.02
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/update.py
 import urequests
 import os
@@ -8,7 +8,7 @@ for allfiles in os.listdir():
         continue
     oldversion = None
     url = None
-    with open(allfiles,'r',1,'utf-8','ignore') as file:
+    with open(allfiles,'r') as file:
         for line in file.readlines():
             try:
                 if line.startswith('# VERSION'):
@@ -34,7 +34,7 @@ for allfiles in os.listdir():
                     print('Version Error on new file',e)
                     
         if newversion and newversion > oldversion:
-            with open(allfiles,'w',1,'utf-8') as file:
+            with open(allfiles,'w') as file:
                 print(f'Updating file {allfiles} to version {newversion} from {oldversion}.')
                 file.write(newfile.text)
 
