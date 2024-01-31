@@ -1,5 +1,5 @@
 # VERSION 1.0
-#
+# URL https://raw.githubusercontent.com/Sumiza/micropython/main/update.py
 import urequests
 import os
 
