@@ -1,10 +1,12 @@
-# VERSION 1.03
+# VERSION 1.0
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/update.py
+# This is not recommended to use as it is a security risk
+
 import urequests
 import os
 
-
 def updateall():
+    didupdate = False
     for allfiles in os.listdir():
         if not allfiles.endswith('.py'):
             continue
@@ -39,5 +41,9 @@ def updateall():
                 with open(allfiles,'w') as file:
                     print(f'Updating file {allfiles} to version {newversion} from {oldversion}.')
                     file.write(newfile.text)
+                    didupdate = True
 
             newfile.close()
+    if didupdate:
+        import machine
+        machine.reset()
