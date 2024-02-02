@@ -1,3 +1,5 @@
+# VERSION 1.0
+# URL https://raw.githubusercontent.com/Sumiza/micropython/main/wifi.py
 import network
 import time
 import _thread
