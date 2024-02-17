@@ -1,4 +1,4 @@
-# VERSION 1.031
+# VERSION 1.032
 ## URL https://raw.githubusercontent.com/Sumiza/micropython/main/update.py
 # URL https://raw.githubusercontent.com/Sumiza/micropython/beta/update.py
 # This is not recommended to use as it is a security risk
@@ -9,7 +9,7 @@ import os
 def download(url,retry):
     for _ in range(retry):
         try:
-            print('Downloading',url)
+            print('Checking',url)
             return urequests.get(url,timeout=10)
         except Exception as e:
             print('Download Error',e)
