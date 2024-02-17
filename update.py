@@ -10,6 +10,7 @@ import time
 def download(url,retry):
     for _ in range(retry):
         try:
+            print('Downloading',url)
             return urequests.get(url,timeout=20)
         except Exception as e:
             print('Download Error',e)
