@@ -1,4 +1,4 @@
-# VERSION 1.02
+# VERSION 1.03
 ## URL https://raw.githubusercontent.com/Sumiza/micropython/main/update.py
 # URL https://raw.githubusercontent.com/Sumiza/micropython/beta/update.py
 # This is not recommended to use as it is a security risk
@@ -19,6 +19,7 @@ def download(url,retry):
     
 def updateall(retry=1):
     didupdate = False
+    print('Checking if update is needed')
     for allfiles in os.listdir():
         if not allfiles.endswith('.py'):
             continue
@@ -56,3 +57,5 @@ def updateall(retry=1):
     if didupdate:
         import machine
         machine.reset()
+    else:
+        print('No updated needed running newest version(s)')
