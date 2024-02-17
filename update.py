@@ -5,16 +5,14 @@
 
 import urequests
 import os
-import time
 
 def download(url,retry):
     for _ in range(retry):
         try:
             print('Downloading',url)
-            return urequests.get(url,timeout=20)
+            return urequests.get(url,timeout=10)
         except Exception as e:
             print('Download Error',e)
-            time.sleep(5)
     return None
     
 def updateall(retry=1):
