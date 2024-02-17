@@ -4,8 +4,18 @@
 
 import urequests
 import os
+import time
 
-def updateall():
+def download(url,retry):
+    for _ in range(retry):
+        try:
+            return urequests.get(url,timeout=20)
+        except Exception as e:
+            print('Download Error',e)
+            time.sleep(5)
+    return None
+    
+def updateall(retry=1):
     didupdate = False
     for allfiles in os.listdir():
         if not allfiles.endswith('.py'):
@@ -25,25 +35,22 @@ def updateall():
 
         if oldversion and url:
             newversion = None
-            try:
-                newfile = urequests.get(url,timeout=20)
-            except Exception as e:
-                print('Download Error',e)
-                continue
-            for line in newfile.text.splitlines():
-                if line.startswith('# VERSION'):
-                    try:
-                        newversion = float(line.replace('# VERSION','').strip())
-                    except Exception as e:
-                        print('Version Error on new file',e)
-                        
-            if newversion and newversion > oldversion:
-                with open(allfiles,'w') as file:
-                    print(f'Updating file {allfiles} to version {newversion} from {oldversion}.')
-                    file.write(newfile.text)
-                    didupdate = True
+            newfile = download(url,retry)
+            if newfile:
+                for line in newfile.text.splitlines():
+                    if line.startswith('# VERSION'):
+                        try:
+                            newversion = float(line.replace('# VERSION','').strip())
+                        except Exception as e:
+                            print('Version Error on new file',e)
+                            
+                if newversion and newversion > oldversion:
+                    with open(allfiles,'w') as file:
+                        print(f'Updating file {allfiles} to version {newversion} from {oldversion}.')
+                        file.write(newfile.text)
+                        didupdate = True
+                newfile.close()
 
-            newfile.close()
     if didupdate:
         import machine
         machine.reset()
