@@ -1,4 +1,4 @@
-# VERSION 1.0
+# VERSION 1.01
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/wifi.py
 import network
 import time
@@ -7,7 +7,7 @@ from machine import Pin
  
  
 class Wifi():
-    def __init__(self,ssid=None,password=None,wifipin=2,timeout=10,keepactive=True) -> None:
+    def __init__(self,ssid=None,password=None,hostname=None,wifipin=2,timeout=10,keepactive=True) -> None:
         self.ssid = ssid
         self.password = password
         self.wifipin = wifipin
@@ -15,6 +15,8 @@ class Wifi():
         self.keepactive = keepactive
         self.wifiled = Pin(self.wifipin ,Pin.OUT)
         self.wlan = network.WLAN(network.STA_IF)
+        if hostname:
+            network.hostname(hostname)
  
     def _connected(self):
         if self.wlan.isconnected():
