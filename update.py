@@ -45,6 +45,8 @@ def updateall(retry=1):
                             newversion = float(line.replace('# VERSION','').strip())
                         except Exception as e:
                             print('Version Error on new file',e)
+                if newversion is None:
+                    print('Failed to get new file')
                             
                 if newversion and newversion > oldversion:
                     with open(allfiles,'w') as file:
