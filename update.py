@@ -43,6 +43,7 @@ def updateall(retry=1):
                     if line.startswith('# VERSION'):
                         try:
                             newversion = float(line.replace('# VERSION','').strip())
+                            break
                         except Exception as e:
                             print('Version Error on new file',e)
                 if newversion is None:
