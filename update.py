@@ -35,7 +35,7 @@ def updateall(retry=1):
                     break
 
         if oldversion and url:
-            print(f'Current version of {allfiles} is {oldversion}')
+            print(f'Local version of {allfiles} is {oldversion}')
             newversion = None
             newfile = download(url,retry)
             if newfile:
@@ -43,9 +43,10 @@ def updateall(retry=1):
                     if line.startswith('# VERSION'):
                         try:
                             newversion = float(line.replace('# VERSION','').strip())
+                            print(f'Remote Version is {newversion}')
                             break
                         except Exception as e:
-                            print('Version Error on new file',e)
+                            print('Version Error on new file',e,line)
                 if newversion is None:
                     print('Failed to get new file')
                             
