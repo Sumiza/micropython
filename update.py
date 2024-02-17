@@ -1,11 +1,11 @@
-# VERSION 1.0
+# VERSION 1.01
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/update.py
 # This is not recommended to use as it is a security risk
 
 import urequests
 import os
 
-def updateall():
+def updateall(retry=1):
     didupdate = False
     for allfiles in os.listdir():
         if not allfiles.endswith('.py'):
@@ -25,17 +25,18 @@ def updateall():
 
         if oldversion and url:
             newversion = None
-            try:
-                newfile = urequests.get(url,timeout=20)
-            except Exception as e:
-                print('Download Error',e)
-                continue
-            for line in newfile.text.splitlines():
-                if line.startswith('# VERSION'):
-                    try:
-                        newversion = float(line.replace('# VERSION','').strip())
-                    except Exception as e:
-                        print('Version Error on new file',e)
+            for _ in range(retry):
+                try:
+                    newfile = urequests.get(url,timeout=20)
+                except Exception as e:
+                    print('Download Error',e)
+                    continue
+                for line in newfile.text.splitlines():
+                    if line.startswith('# VERSION'):
+                        try:
+                            newversion = float(line.replace('# VERSION','').strip())
+                        except Exception as e:
+                            print('Version Error on new file',e)
                         
             if newversion and newversion > oldversion:
                 with open(allfiles,'w') as file:
