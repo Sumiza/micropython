@@ -43,7 +43,7 @@ def updateall(retry=1):
                     if line.startswith('# VERSION'):
                         try:
                             newversion = float(line.replace('# VERSION','').strip())
-                            print(f'Remote Version is {newversion}')
+                            print(f'Remote version is {newversion}')
                             break
                         except Exception as e:
                             print('Version Error on new file',e,line)
