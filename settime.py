@@ -1,26 +1,28 @@
+# VERSION 1.00
+# URL https://raw.githubusercontent.com/Sumiza/micropython/beta/settime.py
+## URL https://raw.githubusercontent.com/Sumiza/micropython/main/settime.py
 
-# from urlrequest import UrlRequest as urequest
 import urequests
 import time
 from machine import RTC
 
-a = urequests.get('https://worldtimeapi.org/api/ip').json()
 
-print(a)
+def settime(retry=1):
+    for _ in range(retry):
+        try:
+            resjson = urequests.get('https://worldtimeapi.org/api/ip').json()
+        except Exception as e:
+            print('Download Error',e)
+    
+    if resjson:
+        curtime = resjson['unixtime']+resjson['raw_offset']+resjson['dst_offset']
 
-curtime = a['unixtime']+a['raw_offset']+a['dst_offset']
+        if time.gmtime(0)[0] == 2000:
+            curtime = curtime - 946684800
+        adjtime = time.gmtime(curtime)
 
-if time.gmtime(0)[0] == 2000:
-    curtime = curtime - 946684800
-
-print(curtime)
-
-d = time.gmtime(curtime)
-
-datetimetuple = (d[0],d[1],d[2],a['day_of_week'],d[3],d[4],d[5],0)
-
-print(datetimetuple)
-
-rtc = RTC()
-
-rtc.init(datetimetuple)
+        datetimetuple = (adjtime[0],adjtime[1],adjtime[2],0,adjtime[3],adjtime[4],adjtime[5],0)
+        rtc = RTC()
+        rtc.init(datetimetuple)
+        return True
+    return False
