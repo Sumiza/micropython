@@ -1,11 +1,10 @@
 
 # from urlrequest import UrlRequest as urequest
-
-import urlrequest
+import urequests
 import time
-import machine
+from machine import RTC
 
-a = urequest.get('https://worldtimeapi.org/api/ip').json()
+a = urequests.get('https://worldtimeapi.org/api/ip').json()
 
 print(a)
 
@@ -16,10 +15,14 @@ curtime = a['unixtime']+a['raw_offset']+a['dst_offset']
 if time.gmtime(0)[0] == 2000:
     curtime = curtime - 946684800
 
-
 print(curtime)
 
-tt = time.gmtime(curtime)
+d = time.gmtime(curtime)
 
-print(tt)
-machine.RTC.datetime(tt)
+datetimetuple = (d[0],d[1],d[2],d[3],d[4],0,0)
+
+print(datetimetuple)
+
+rtc = RTC()
+
+rtc.datetime(datetimetuple)
