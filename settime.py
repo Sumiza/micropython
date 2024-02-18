@@ -8,8 +8,6 @@ a = urequests.get('https://worldtimeapi.org/api/ip').json()
 
 print(a)
 
-
-
 curtime = a['unixtime']+a['raw_offset']+a['dst_offset']
 
 if time.gmtime(0)[0] == 2000:
@@ -19,10 +17,10 @@ print(curtime)
 
 d = time.gmtime(curtime)
 
-datetimetuple = (d[0],d[1],d[2],d[3],d[4],0,0)
+datetimetuple = (d[0],d[1],d[2],a['day_of_week'],d[3],d[4],d[5],0)
 
 print(datetimetuple)
 
 rtc = RTC()
 
-rtc.datetime(datetimetuple)
+rtc.init(datetimetuple)
