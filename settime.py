@@ -1,4 +1,4 @@
-# VERSION 1.00
+# VERSION 1.001
 # URL https://raw.githubusercontent.com/Sumiza/micropython/beta/settime.py
 ## URL https://raw.githubusercontent.com/Sumiza/micropython/main/settime.py
 
@@ -8,6 +8,7 @@ from machine import RTC
 
 
 def settime(retry=1):
+    resjson = None
     for _ in range(retry):
         try:
             resjson = urequests.get('https://worldtimeapi.org/api/ip').json()
