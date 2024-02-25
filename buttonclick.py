@@ -1,3 +1,6 @@
+
+# refrence not stand alone
+
 import machine, time
 
 button = machine.Pin(35, machine.Pin.IN, machine.Pin.PULL_DOWN)

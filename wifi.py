@@ -1,5 +1,9 @@
-# VERSION 1.01
+# VERSION 1.02
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/wifi.py
+
+# Threading is not working right on the esp32 I had access to
+# dont use threading if you are having network issues
+
 import network
 import time
 import _thread
@@ -7,7 +11,7 @@ from machine import Pin
  
  
 class Wifi():
-    def __init__(self,ssid=None,password=None,hostname=None,wifipin=2,timeout=10,keepactive=True) -> None:
+    def __init__(self,ssid=None,password=None,hostname=None,wifipin=2,timeout=10,keepactive=False) -> None:
         self.ssid = ssid
         self.password = password
         self.wifipin = wifipin
@@ -56,7 +60,6 @@ class Wifi():
                         print(self.wlan.ifconfig())
                         return True
                 return False
- 
  
             else:
                 while True:
