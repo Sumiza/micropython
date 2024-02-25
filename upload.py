@@ -1,6 +1,6 @@
-# VERSION 1.033
-## URL https://raw.githubusercontent.com/Sumiza/micropython/main/update.py
-# URL https://raw.githubusercontent.com/Sumiza/micropython/beta/update.py
+# VERSION 1.00
+## URL https://raw.githubusercontent.com/Sumiza/micropython/main/upload.py
+# URL https://raw.githubusercontent.com/Sumiza/micropython/beta/upload.py
 # This is not recommended to use as it is a security risk
 
 
