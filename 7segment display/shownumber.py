@@ -3,9 +3,7 @@ import _thread
 import time
 from machine import Pin
 import machine
-machine.reset()
-# from builtins import range
-Pin(45,Pin.IN,Pin.PULL_UP)
+
 
 class Shownumber():
     def __init__(self) -> None:
@@ -59,6 +57,6 @@ class Shownumber():
                             time.sleep(0.001)
                             Pin(self.outpins[loc],Pin.OUT,value=0)
                     Pin(self.inpins[lo],Pin.IN,Pin.PULL_UP)
-        else:
-            self.offpins()
-            _thread.exit()
+            else:
+                self.offpins()
+                _thread.exit()
