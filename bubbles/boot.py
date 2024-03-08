@@ -1,3 +1,10 @@
+# VERSION 1.00
+# URL https://raw.githubusercontent.com/Sumiza/micropython/beta/bubbles/boot.py
+## URL https://raw.githubusercontent.com/Sumiza/micropython/main/bubbles/boot.py
+
+"""
+    work in progress but will be for tracking fermentation
+"""
 
 from machine import Pin, reset
 
