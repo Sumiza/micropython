@@ -1,4 +1,4 @@
-# VERSION 1.001
+# VERSION 1.002
 # URL https://raw.githubusercontent.com/Sumiza/micropython/beta/settime.py
 ## URL https://raw.githubusercontent.com/Sumiza/micropython/main/settime.py
 
@@ -24,6 +24,6 @@ def settime(retry=1):
 
         datetimetuple = (adjtime[0],adjtime[1],adjtime[2],0,adjtime[3],adjtime[4],adjtime[5],0)
         rtc = RTC()
-        rtc.init(datetimetuple)
+        rtc.datetime(datetimetuple)
         return True
     return False
