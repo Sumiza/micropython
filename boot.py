@@ -21,8 +21,11 @@ if dipswitch[1].value() == 1:
     wifi.connect()
 
     if wifi.isconnected():
-        import settime
-        settime.settime()
+        try:
+            import settime
+            settime.settime()
+        except:
+            pass # dont need time
 
     if dipswitch[2].value() == 1 and wifi.isconnected():
         import update
