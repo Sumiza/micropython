@@ -1,18 +1,42 @@
+# VERSION 1.01
+## URL https://raw.githubusercontent.com/Sumiza/micropython/main/aiourlrequest.py
+# URL https://raw.githubusercontent.com/Sumiza/micropython/beta/aiourlrequest.py
 
 import json as jsonclass
 import asyncio
+import requests
+
+requests.get()
 
 """
-    async urlrequest in a class to make it easier to use
+    mostly a drop in replacement for requests 
+    but async for every simple tasks
+    ssl still blocks on sending
+    import aiourlrequest as requests
 """
-                
-async def urlrequest(
+
+class Response():
+    def __init__(self) -> None:
+        self.text = None
+        self.status_code = None
+        self.status = None
+        self.data  = None
+        self.headers = dict()
+
+    def json(self):
+        return jsonclass.loads(self.text)
+    
+    def __str__(self) -> str:
+        return self.status_code
+
+async def aiourlrequest(
                 url:str,
                 data:str = None,
                 json = None,
                 method:str = 'GET',
                 headers:dict = None,
-                readlimit:int = 500,
+                readlimit:int = 5000,
+                ssl = None,
                 timeout:float = 10 #TODO
                 ):
 
@@ -28,7 +52,7 @@ async def urlrequest(
     headers['HOST'] = host
 
     if not headers.get('User-Agent'):
-        headers['User-Agent'] = 'AsyncUrlRequest v1.0'
+        headers['User-Agent'] = 'aioUrlRequest v1.0'
 
     if json:
         headers['Content-Type'] = 'application/json'
@@ -46,47 +70,65 @@ async def urlrequest(
 
     headers = "\r\n".join(f"{k}: {v}" for k, v in headers.items()) + "\r\n"
     
-    if proto == "http:":
-        port = 80
-        ssl = False
-    elif proto == "https:":
-        port = 443
-        ssl = True
-    else:
-        raise ValueError("Unsupported: " + proto)
+    if ssl is None:
+        if proto == "http:":
+            port = 80
+            ssl = False
+        elif proto == "https:":
+            port = 443
+            ssl = True # this causes blocking
+        else:
+            raise ValueError("Unsupported: " + proto)
 
     reader, writer = await asyncio.open_connection(host, port, ssl=ssl)
     query = f'{method} /{path} HTTP/1.1\r\n{headers}{data}\r\n\r\n'.encode()
     writer.write(query)
-    await writer.drain()
-    
-    response = dict()
+    await writer.drain() # if ssl is on this will block
+
     firstline = await reader.readline()
     firstline = firstline.decode().split(' ')
-    response['status_code'] = firstline[1]
-    response['status'] = firstline[2]
-    
+
+    response = Response()
+    response.status_code = firstline[1]
+    response.status = firstline[2]
+
     while True:
         line = await reader.readline()
-        if line == b'' or line ==b'\r\n':
+        if line == b'' or line == b'\r\n':
             break
         line = line.decode().split(':')
-        response[line[0]] = ''.join(line[1:]).strip()
-          
+        response.headers[line[0]] = ''.join(line[1:]).strip()
+        
     resdata = await reader.read(readlimit)
-    response['data'] = resdata.decode()
+    response.data = resdata
+    try:
+        response.text = response.data.decode()
+    except:
+        response.text = None
     writer.close()
 
     return response
 
-async def test():
-    #from aiourlrequest import urlrequest
-    a = await urlrequest('https://webhookbin.net/v1/makebin',
-                         method='GET',
-                         data='',
-                         headers={'jumping':"cow"})
-    print(a)
-    print(a.get('data'))
+def get(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='GET')
+def post(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='POST')
+def put(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='PUT')
+def delete(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='DELETE')
+def head(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='HEAD')
+def patch(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='PATCH')
 
 if __name__ == '__main__':
-    asyncio.run(test())
+    async def demo():
+        #import aiourlrequest as requests
+        b = await aiourlrequest('https://webhookbin.net/v1/makebin',
+                            data='',
+                            headers={'jumping':"cow"})
+        print(b)
+        print(b.json())
+        print(b.text)
+    asyncio.run(demo())
