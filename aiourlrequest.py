@@ -4,9 +4,6 @@
 
 import json as jsonclass
 import asyncio
-import requests
-
-requests.get()
 
 """
     mostly a drop in replacement for requests 
