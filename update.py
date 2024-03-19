@@ -33,8 +33,8 @@ def updateall(retry=1):
                     if newfile:
                         with open(filename,'w') as file:
                             print(f'Downloaded {filename}')
-                        file.write(newfile.text)
-                        newfile.close()
+                            file.write(newfile.text)
+                            newfile.close()
     
     for allfiles in allfileslist:
         oldversion = None
