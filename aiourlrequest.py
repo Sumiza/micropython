@@ -73,14 +73,14 @@ async def aiourlrequest(
             ssl = False
         elif proto == "https:":
             port = 443
-            ssl = True # this causes blocking
+            ssl = True # blocking?
         else:
             raise ValueError("Unsupported: " + proto)
 
     reader, writer = await asyncio.open_connection(host, port, ssl=ssl)
     query = f'{method} /{path} HTTP/1.1\r\n{headers}{data}\r\n\r\n'.encode()
     writer.write(query)
-    await writer.drain() # if ssl is on this will block
+    await writer.drain()
 
     firstline = await reader.readline()
     firstline = firstline.decode().split(' ')
