@@ -6,8 +6,8 @@ import asyncio
 
 """
     mostly a drop in replacement for requests 
-    but async for every simple tasks
-    ssl still blocks on sending
+    but async for very simple tasks
+    ssl still blocks on sending ? 
     import aiourlrequest as requests
 """
 
