@@ -1,81 +1,75 @@
-# VERSION 1.01
+# VERSION 1.03
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/wifi.py
+ 
 import network
 import time
-import _thread
 from machine import Pin
  
- 
 class Wifi():
-    def __init__(self,ssid=None,password=None,hostname=None,wifipin=2,timeout=10,keepactive=True) -> None:
+    def __init__(self,ssid=None,password=None,hostname=None,wifipin=None,timeout=10) -> None:
+ 
         self.ssid = ssid
         self.password = password
-        self.wifipin = wifipin
         self.timeout = timeout
-        self.keepactive = keepactive
-        self.wifiled = Pin(self.wifipin ,Pin.OUT)
         self.wlan = network.WLAN(network.STA_IF)
+ 
+        if wifipin:
+            self.wifiled = Pin(wifipin ,Pin.OUT)
+        else:
+            self.wifiled = None
+ 
         if hostname:
             network.hostname(hostname)
  
-    def _connected(self):
-        if self.wlan.isconnected():
-            self.wifiled.on()
-            return True
-        else:
-            self.wifiled.off()
-            return False
+    def led(self,onoff=None,selfcheck=False):
  
-    def _makecon(self):
-        if not self._connected():
-            self.wlan.active(True)
-            try:
-                self.wlan.connect(self.ssid,self.password)
-            except: pass
-            self._connected()
+        if self.wifiled is not None:
+            if selfcheck:
+                onoff = self.wlan.isconnected()
+ 
+            if onoff:
+                self.wifiled.on()
+            else:
+                self.wifiled.off()
  
     def connect(self,ssid=None,password=None):
-        self.ssid = ssid
-        self.password = password
  
-        if ssid is None: # off
-            self.wlan.active(False)
-            self._connected()
-            return False
+        if self.ssid is None:
+            self.ssid = ssid
+        if self.password is None:
+            self.password = password
  
-        if self.keepactive:
-            _thread.start_new_thread(self._keepcon,(self.keepactive,))
+        if self.ssid is None:
+            raise ValueError('SSID is needed')
  
-        if ssid: # on
-            if self.timeout:
-                for _ in range(self.timeout):
-                    self._makecon()
-                    if not self._connected():
-                        time.sleep(1)
-                    else:
-                        print(self.wlan.ifconfig())
-                        return True
-                return False
+        self.wlan.active(True)
+        self.wlan.connect(self.ssid,self.password)
  
- 
+        for _ in range(self.timeout):
+            if self.wlan.isconnected():
+                print(self.wlan.ifconfig())
+                self.led(True)
+                return True
             else:
-                while True:
-                    if not self._connected():
-                        self._makecon()
-                        time.sleep(1)
-                    else:
-                        print(self.wlan.ifconfig())
-                        return True
- 
-    def _keepcon(self,keepactive):
-        while True:
-            if self.ssid is None:
-                break
-            if not self._connected():
-                self._makecon()
                 time.sleep(1)
-            else:
-                time.sleep(10)
+        self.led(False)
+        return False
+ 
+    def disconnect(self):
+        self.wlan.active(False)
+        self.wlan.disconnect()
+        self.led(False)
+        return True
+ 
+    def deinit(self):
+        # Raspberry pi pico W only
+        self.led(False)
+        self.wlan.deinit()
+        return True
+ 
+    def isconnected(self):
+        self.led(selfcheck=True)
+        return self.wlan.isconnected()
  
     def scan(self):
         return self.wlan.scan()
