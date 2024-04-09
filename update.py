@@ -1,6 +1,5 @@
 # VERSION 1.03
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/update.py
-## URL https://raw.githubusercontent.com/Sumiza/micropython/beta/update.py
 # This is not recommended to use as it is a security risk
 
 import urequests

@@ -1,6 +1,5 @@
 # VERSION 1.003
-# URL https://raw.githubusercontent.com/Sumiza/micropython/beta/settime.py
-## URL https://raw.githubusercontent.com/Sumiza/micropython/main/settime.py
+# URL https://raw.githubusercontent.com/Sumiza/micropython/main/settime.py
 
 import urequests
 import time

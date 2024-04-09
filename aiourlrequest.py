@@ -1,6 +1,5 @@
 # VERSION 1.01
-## URL https://raw.githubusercontent.com/Sumiza/micropython/main/aiourlrequest.py
-# URL https://raw.githubusercontent.com/Sumiza/micropython/beta/aiourlrequest.py
+# URL https://raw.githubusercontent.com/Sumiza/micropython/main/aiourlrequest.py
 
 import json as jsonclass
 import asyncio
