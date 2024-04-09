@@ -1,3 +1,6 @@
+# VERSION 1.0
+# URL https://raw.githubusercontent.com/Sumiza/micropython/main/matrixkeypad.py
+
 import machine
 
 #pinout membrane r1 r2 r3 r4 c1 c2 c3 c4
