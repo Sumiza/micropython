@@ -68,7 +68,8 @@ if dipswitch[3].value() == 1:
             ledgreen(False)
             Pin(redled,value=1)
 
-    async def arm():
+    async def arm(keypass,armtype):
+        await asyncio.sleep(0.2) # wait for keypad to finish
         for _ in range(pintime):
             if ARMED is False:
                 beep(True)
@@ -79,17 +80,27 @@ if dipswitch[3].value() == 1:
                 await asyncio.sleep(0.5)
             else:
                 return #stopped arming
+        
         ARMED = True
         ledred(True)
+        writestate('Armed',keypass,armtype)
         notifyadmins()
         # Arming Done
     
-    async def disarm():
+    async def disarm(keypass,armtype):
         ARMED = False
         ledgreen(True)
         beep(False)
+        writestate('Disarmed',keypass,armtype)
         notifyadmins()
         # disarm Done
+    
+    async def writestate(arm,keypass,armtype):
+        now = time.localtime()
+        humantime =  f'{now[3]}:{now[4]} {now[1]}/{now[2]}/{now[0]}'
+        LAST = f'Alarm {arm} by {keypass['Name']} at {humantime()} via {armtype}'
+        with open('last','r') as file:
+            file.write(LAST)
 
     async def notifyadmins():
         for values in admins.values():
@@ -105,14 +116,16 @@ if dipswitch[3].value() == 1:
         sendevery = 0
         while ARMED is True:
             Pin(hornpin,value = 1)
-            await asyncio.sleep(1)
             sendevery -= 1
             if sendevery <= 0:
-                for values in admins.values():
-                    await sendmessage("Alarm trigged",values['Phonenr'])
-                    await call(values['Phonenr'])
-
+                asyncio.create_task(sendalarm(whichpin))
+            await asyncio.sleep(1)
         Pin(hornpin,value=0)
+    
+    async def sendalarm(whichpin):
+        for values in admins.values():
+            await sendmessage(f"Alarm trigged on {whichpin}",values['Phonenr'])
+            await call(values['Phonenr'])
     
     async def sendmessage(message,number):
         message = {
@@ -136,15 +149,11 @@ if dipswitch[3].value() == 1:
             await aiourlrequest.post(posturl+'calls',json=message,headers=postheaders,readlimit=50)
         except: pass
         
-    async def armtoggle(pin,armtype):
-        now = time.localtime()
-        humantime = f'{now[3]}:{now[4]} {now[1]}/{now[2]}/{now[0]}'
+    async def armtoggle(keypass,armtype):
         if ARMED is False:
-            LAST = f'Alarm Armed by {pin['Name']} at {humantime} via {armtype}'
-            arm()
+            arm(keypass,armtype)
         elif ARMED is True:
-            LAST = f'Alarm Disarmed by {pin['Name']} at {humantime} via {armtype}'
-            disarm()
+            disarm(keypass,armtype)
     
     def beep(toggle):
         if toggle is True:
@@ -153,19 +162,20 @@ if dipswitch[3].value() == 1:
             Pin(beeppin, value = 0)
 
     async def poolkeypad():
-        curkey = ''
+        curpass = ''
         while True:
             pushedkey = keypad.scan()
             if pushedkey:
-                beep() #task?
-                while len(curkey) > 3:
-                    curkey = curkey[1:]
-                curkey += pushedkey
+                beep(True)
+                while len(curpass) > 3:
+                    curpass = curpass[1:]
+                curpass += pushedkey
 
-                if curkey in users:
-                    armtoggle(curkey,'keypad') #task?
-                    curkey = ''
+                if curpass in users:
+                    asyncio.create_task(armtoggle(curpass,'keypad'))
+                    curpass = ''
                 asyncio.sleep(0.1)
+                beep(False)
     
             asyncio.sleep(0.01)
 
