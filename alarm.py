@@ -1,3 +1,6 @@
+# VERSION 0.02
+# URL https://raw.githubusercontent.com/Sumiza/micropython/main/alarm.py
+
 from machine import Pin, reset
 import localdata
 
