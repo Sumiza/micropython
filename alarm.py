@@ -26,7 +26,7 @@ if dipswitch[1].value() == 1:
         import update
         update.updateall()
     
-    if dipswitch[6].value() == 1 and wifi.isconnected():
+    if dipswitch[4].value() == 1 and wifi.isconnected():
         import upload
         upload.run()
         reset()
