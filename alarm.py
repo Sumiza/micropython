@@ -1,12 +1,9 @@
-# VERSION 0.02
-# URL https://raw.githubusercontent.com/Sumiza/micropython/main/alarm.py
-
 from machine import Pin, reset
 import localdata
 
 dipswitch = dict()
 
-for switch, pin in enumerate([10,11,12,13,14,15]):
+for switch, pin in enumerate([11,12,13,14]):
     dipswitch[switch+1] = Pin(pin,Pin.IN,Pin.PULL_DOWN)
 
 if dipswitch[1].value() == 1:
