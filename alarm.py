@@ -221,7 +221,7 @@ if dipswitch[3].value() == 1:
                     while len(curpass) > 3:
                         curpass = curpass[1:]
                     curpass += str(pushedkey)
-                    if curpass in localdata.USERS:
+                    if int(curpass) in localdata.USERS:
                         if self.armed is False:
                             asyncio.create_task(self.arm(int(curpass),'keypad'))
                         elif self.armed is True:
