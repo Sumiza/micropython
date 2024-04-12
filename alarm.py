@@ -294,8 +294,8 @@ if dipswitch[3].value() == 1:
             #     self.poolkeypad()
             #     ) # run forever
 
-alarm = Alarm('4x4')
-asyncio.run(alarm.main())
+    alarm = Alarm('4x4')
+    asyncio.run(alarm.main())
 
 
         # async def armtoggle(self,keypass,armtype):
