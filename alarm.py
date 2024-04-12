@@ -37,6 +37,13 @@ if dipswitch[3].value() == 1:
     import aiourlrequest
     from matrixkeypad import MatrixKeypad
 
+    level = 1
+    def logger(data):
+        if level is None or level == 0:
+            return
+        elif level == 1:
+            print(data)
+
     class Alarm():
         def __init__(self,keytype) -> None:
             self.armed = None
@@ -51,6 +58,7 @@ if dipswitch[3].value() == 1:
             self.hornpin = Pin(localdata.HORNPIN,Pin.OUT,value=0)
 
         def ledgreen(self, toggle):
+            logger(f"ledgreen {toggle}")
             if toggle is True:
                 self.ledred(False)
                 self.greenled.value(1)
@@ -58,6 +66,7 @@ if dipswitch[3].value() == 1:
                 self.greenled.value(0)
 
         def ledred(self,toggle):
+            logger(f"ledred {toggle}")
             if toggle is True:
                 self.ledgreen(False)
                 self.redled.value(1)
@@ -65,12 +74,14 @@ if dipswitch[3].value() == 1:
                 self.redled.value(0)
                 
         def beep(self,toggle):
+            logger(f"beep {toggle}")
             if toggle is True:
                 self.beeppin.value(1)
             elif toggle is False:
                 self.beeppin.value(0)
     
         async def arm(self,keypass,armtype):
+            logger(f'arm {keypass} {armtype}')
             await asyncio.sleep(0.2) # wait for keypad to finish
             for _ in range(localdata.PINTIME):
                 if self.armed is False:
@@ -90,6 +101,7 @@ if dipswitch[3].value() == 1:
             # Arming Done
         
         async def disarm(self,keypass,armtype):
+            logger(f'disarm {keypass} {armtype}')
             self.armed = False
             self.ledgreen(True)
             self.beep(False)
@@ -99,8 +111,9 @@ if dipswitch[3].value() == 1:
         
         def writestate(self,arm,keypass,armtype):
             now = time.localtime()
-            humantime =  f'{now[3]}:{now[4]} {now[1]}/{now[2]}/{now[0]}' #TODO micropython version?
-            self.last = f'Alarm {arm} by {localdata.USERS[keypass]} at {humantime} via {armtype}'
+            humantime =  f'{now[3]:02d}:{now[4]:02d} {now[1]:02d}/{now[2]:02d}/{now[0]}'
+            self.last = f'Alarm {arm} by {localdata.USERS[keypass]['Name']} at {humantime} via {armtype}'
+            logger(f'writestate {self.last}')
             with open('last','w') as file:
                 file.write(self.last)
 
@@ -110,10 +123,11 @@ if dipswitch[3].value() == 1:
                     await self.sendmessage(self.last,values['Phonenr'])
 
         async def trigger(self,whichpin):
+            logger(f'trigger {whichpin}')
             self.beep(True)
             for _ in range(localdata.PINTIME):
                 if self.armed is True:
-                    asyncio.sleep(1)
+                    await asyncio.sleep(1)
                 else:
                     return # disarmed
             sendevery = 0
@@ -132,6 +146,7 @@ if dipswitch[3].value() == 1:
                     await self.call(values['Phonenr'])
         
         async def sendmessage(self,message,number):
+            logger(f'trigger sendmessage {message} {number}')
             message = {
                 'from':localdata.FROMNUMBER,
                 'to':number,
@@ -146,6 +161,7 @@ if dipswitch[3].value() == 1:
             except: pass
 
         async def call(self,number):
+            logger(f'trigger call {number}')
             message = {
                 'from':localdata.FROMNUMBER,
                 'to':number,
@@ -168,50 +184,83 @@ if dipswitch[3].value() == 1:
         
         async def doording(self):
             doortoggle = False
+            logger('Starting doording')
             while True:
                 if self.armed is False:
                     if self.sensorpins[localdata.DOORDING].value() == 0 and doortoggle is False:
+                        logger(f'door opened {self.sensorpins[localdata.DOORDING].value()} {doortoggle}')
                         doortoggle = True
                         for _ in range(4):
                             self.beep(True)
-                            asyncio.sleep(0.1)
+                            await asyncio.sleep(0.1)
                             self.beep(False)
-                            asyncio.sleep(0.1)
+                            await asyncio.sleep(0.1)
                     elif self.sensorpins[localdata.DOORDING].value() == 1 and doortoggle is True:
+                        logger(f'door closed {self.sensorpins[localdata.DOORDING].value()} {doortoggle}')
                         doortoggle = False
-                    asyncio.sleep(0.5)
-                else:
-                    asyncio.sleep(1)
+                await asyncio.sleep(1)
 
         async def checksensors(self):
+            logger('Starting checksensor')
             while True:
                 if self.armed is True:
                     respin = self.scansensors()
                     if respin is not None and self.armed is True:
                         await self.trigger(respin)
-                    asyncio.sleep(0.1)
+                    await asyncio.sleep(0.1)
                 else:
-                    asyncio.sleep(1)
+                    await asyncio.sleep(1)
 
         async def poolkeypad(self):
             curpass = ''
             while True:
                 pushedkey = self.keypad.scan()
                 if pushedkey is not None:
+                    logger(f'pushed key {pushedkey} - curpass: {curpass}')
                     self.beep(True)
                     while len(curpass) > 3:
                         curpass = curpass[1:]
-                    curpass += pushedkey
+                    curpass += str(pushedkey)
                     if curpass in localdata.USERS:
                         if self.armed is False:
-                            asyncio.create_task(self.arm(curpass,'keypad'))
+                            asyncio.create_task(self.arm(int(curpass),'keypad'))
                         elif self.armed is True:
-                            asyncio.create_task(self.disarm(curpass,'keypad'))
+                            asyncio.create_task(self.disarm(int(curpass),'keypad'))
                         curpass = ''
-                    asyncio.sleep(0.1)
+                    await asyncio.sleep(0.5)
                     self.beep(False)
-                asyncio.sleep(0.01)
+                await asyncio.sleep(0.01)
+        
+        async def getsms():
 
+            def parsesms(message:str) -> dict:
+                parseresponse = dict() 
+                splitmess = message.split()
+                try:
+                    parseresponse['passkey'] = int(splitmess.pop(0))
+                    parseresponse['action'] = splitmess.pop(0)
+                    
+                except: return None
+
+            while True:
+                await asyncio.sleep(30)
+                try:
+                    res = await aiourlrequest.get(localdata.TELNYXGETURL)
+                    res = res.json()
+                    res = res.get('content',None)
+                    if res:
+                        fromnr = res['data']['payload']['from']['phone_number']
+                        message = res['data']['payload']['text']
+                except: pass
+                else:
+                    if res:
+                        for passkey, values in localdata.USERS.items():
+                            if values['Admin'] is not True:
+                                continue
+                            if values['Phonenr'] != fromnr:
+                                continue
+                            parsed = parsesms(message)
+            
         async def main(self):
             try:
                 with open('last','r') as file:
@@ -224,6 +273,8 @@ if dipswitch[3].value() == 1:
                         self.ledgreen(True)
             except: self.armed = False # first run with no last file
 
+            logger(f"Starting {self.armed}")
+
             running = list()
             running.append(asyncio.create_task(self.poolkeypad()))
             running.append(asyncio.create_task(self.checksensors()))
@@ -233,9 +284,9 @@ if dipswitch[3].value() == 1:
             while True:
                 for task in running:
                     if task.done():
-                        ... # something went very wrong
-                
-                asyncio.sleep(5)
+                        logger(f'{task} reset needed')
+                        reset() # something went very wrong
+                await asyncio.sleep(5)
 
             # poolkey.done()
             # runme = [self.poolkeypad()]
