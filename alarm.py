@@ -4,7 +4,7 @@ import localdata
 dipswitch = dict()
 
 for switch, pin in enumerate([11,12,13,14]):
-    dipswitch[switch+1] = Pin(pin,Pin.IN,Pin.PULL_DOWN)
+    dipswitch[switch+1] = Pin(pin,Pin.IN,Pin.PULL_UP)
 
 if dipswitch[1].value() == 1:
     from wifi import Wifi
@@ -51,7 +51,7 @@ if dipswitch[3].value() == 1:
             self.keypad = MatrixKeypad(keytype)
 
             #set pins
-            self.sensorpins = {sensor:Pin(sensor,Pin.IN,Pin.PULL_DOWN) for sensor in localdata.SENSORS}
+            self.sensorpins = {sensor:Pin(sensor,Pin.IN,Pin.PULL_UP) for sensor in localdata.SENSORS}
             self.greenled = Pin(localdata.GREENLED,Pin.OUT,value=0)
             self.redled = Pin(localdata.REDLED,Pin.OUT,value=0)
             self.beeppin = Pin(localdata.BEEPPIN,Pin.OUT,value=0)
