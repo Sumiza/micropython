@@ -1,4 +1,4 @@
-# VERSION 1.03
+# VERSION 1.033
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/update.py
 # This is not recommended to use as it is a security risk
 
@@ -17,9 +17,25 @@ def download(url,retry):
 def updateall(retry=1):
     didupdate = False
     print('Checking if update is needed...')
-    for allfiles in os.listdir():
-        if not allfiles.endswith('.py'):
-            continue
+    allfileslist = [f for f in os.listdir() if f.endswith('.py')]
+
+    try:
+        import localdata
+        installfiles = localdata.INSTALLFILES
+    except: pass # no install needed
+    else:
+        if installfiles:
+            for url in installfiles:
+                filename = url.split('/')[-1]
+                if filename not in allfileslist:
+                    newfile = download(url,retry)
+                    if newfile:
+                        with open(filename,'w') as file:
+                            print(f'Downloaded {filename}')
+                            file.write(newfile.text)
+                            newfile.close()
+    
+    for allfiles in allfileslist:
         oldversion = None
         url = None
         with open(allfiles,'r') as file:
