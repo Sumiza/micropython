@@ -51,7 +51,11 @@ if dipswitch[3].value() == 0:
             self.keypad = MatrixKeypad(keytype)
 
             #set pins
-            self.sensorpins = {sensor:Pin(sensor,Pin.IN,Pin.PULL_UP) for sensor in localdata.SENSORS}
+            # self.sensorpins = {sensor:Pin(sensor,Pin.IN,Pin.PULL_UP) for sensor,name in localdata.SENSORS.items()}
+            self.sensorpins = dict()
+            for sensor,name in localdata.SENSORS.items():
+                if name is not None:
+                    self.sensorpins[sensor] = (Pin(sensor,Pin.IN,Pin.PULL_UP))
             self.greenled = Pin(localdata.GREENLED,Pin.OUT,value=0)
             self.redled = Pin(localdata.REDLED,Pin.OUT,value=0)
             self.beeppin = Pin(localdata.BEEPPIN,Pin.OUT,value=0)
@@ -82,9 +86,10 @@ if dipswitch[3].value() == 0:
     
         async def arm(self,keypass,armtype):
             logger(f'arm {keypass} {armtype}')
+            self.armed = True
             await asyncio.sleep(0.2) # wait for keypad to finish
             for _ in range(localdata.PINTIME):
-                if self.armed is False:
+                if self.armed is True:
                     self.beep(True)
                     self.ledgreen(True)
                     await asyncio.sleep(0.5)
@@ -93,8 +98,6 @@ if dipswitch[3].value() == 0:
                     await asyncio.sleep(0.5)
                 else:
                     return #stopped arming
-            
-            self.armed = True
             self.ledred(True)
             self.writestate('Armed',keypass,armtype)
             self.notifyadmins()
@@ -130,19 +133,22 @@ if dipswitch[3].value() == 0:
                     await asyncio.sleep(1)
                 else:
                     return # disarmed
-            sendevery = 0
+
+            sendevery = 5*60 # every 5 minute
+            sendcount = 0
             while self.armed is True:
                 self.hornpin.value(1)
-                sendevery -= 1
+                sendcount -= 1
                 if sendevery <= 0:
                     asyncio.create_task(self.sendalarm(whichpin))
+                    sendcount = sendevery
                 await asyncio.sleep(1)
             self.hornpin.value(0)
         
         async def sendalarm(self,whichpin):
             for values in localdata.USERS.values():
                 if values['Admin'] is True:
-                    await self.sendmessage(f"Alarm trigged on {whichpin}",values['Phonenr'])
+                    await self.sendmessage(f"Alarm trigged on {localdata.SENSORS[whichpin]}",values['Phonenr'])
                     await self.call(values['Phonenr'])
         
         async def sendmessage(self,message,number):
@@ -177,17 +183,19 @@ if dipswitch[3].value() == 0:
                     readlimit=50)
             except: pass
         
-        def scansensors(self) -> None|int:
+        async def scansensors(self) -> None|int:
             for pin, pinvalue in self.sensorpins.items():
-                if pinvalue.value() == 1:
+                if pinvalue.value() == 0:
                     return pin
+                await asyncio.sleep(0) #TODO test blocking
+            return None
         
         async def doording(self):
             doortoggle = False
             logger('Starting doording')
             while True:
                 if self.armed is False:
-                    if self.sensorpins[localdata.DOORDING].value() == 1 and doortoggle is False:
+                    if self.sensorpins[localdata.DOORDING].value() == 0 and doortoggle is False:
                         logger(f'door opened {self.sensorpins[localdata.DOORDING].value()} {doortoggle}')
                         doortoggle = True
                         for _ in range(4):
@@ -195,7 +203,7 @@ if dipswitch[3].value() == 0:
                             await asyncio.sleep(0.1)
                             self.beep(False)
                             await asyncio.sleep(0.1)
-                    elif self.sensorpins[localdata.DOORDING].value() == 0 and doortoggle is True:
+                    elif self.sensorpins[localdata.DOORDING].value() == 1 and doortoggle is True:
                         logger(f'door closed {self.sensorpins[localdata.DOORDING].value()} {doortoggle}')
                         doortoggle = False
                 await asyncio.sleep(1)
@@ -204,7 +212,7 @@ if dipswitch[3].value() == 0:
             logger('Starting checksensor')
             while True:
                 if self.armed is True:
-                    respin = self.scansensors()
+                    respin = await self.scansensors()
                     if respin is not None and self.armed is True:
                         await self.trigger(respin)
                     await asyncio.sleep(0.1)
@@ -239,13 +247,25 @@ if dipswitch[3].value() == 0:
         async def getsms(self):
 
             def parsesms(message:str) -> dict:
-                parseresponse = dict() 
-                splitmess = message.split()
                 try:
-                    parseresponse['passkey'] = splitmess.pop(0)
+                    parseresponse = dict() 
+                    parseresponse['fromnr'] = message['data']['payload']['from']['phone_number']
+                    text = message['data']['payload']['text']
+                    splitmess = text.split()
                     parseresponse['action'] = splitmess.pop(0).lower()
+                    parseresponse['passkey'] = splitmess.pop(0)
+                    return parseresponse
                 except: return None
-            
+
+            def checkuser(parsed:dict) -> bool:
+                if self.checkkey(parsed['passkey']) is None:
+                    return False
+                if localdata.USERS[parsed['passkey']]['Admin'] is not True:
+                    return False
+                if localdata.USERS[parsed['passkey']]['Phonenr'] != parsed['fromnr']:
+                    return False
+                return True
+                
             await asyncio.sleep(localdata.PINTIME/2) # wait for startup and trigger before countdown
             while True:
                 try:
@@ -253,22 +273,16 @@ if dipswitch[3].value() == 0:
                     res = res.json()
                     res = res.get('content',None)
                     if res:
-                        fromnr = res['data']['payload']['from']['phone_number']
-                        message = res['data']['payload']['text']
-                        parsed = parsesms(message)
-                        keypass = self.checkkey(parsed['passkey'])
-                        if (keypass is True and
-                            localdata.USERS[keypass].values['Admin'] is True and 
-                            localdata.USERS[keypass].values['Phonenr'] == fromnr):
-
+                        parsed = parsesms(res)
+                        if checkuser(parsed):
                             if parsed['action'] == 'disarm':
-                                asyncio.create_task(self.disarm(keypass,'SMS'))
+                                asyncio.create_task(self.disarm(parsed['passkey'],'SMS'))
                             elif parsed['action'] == 'arm':
-                                asyncio.create_task(self.arm(keypass,'SMS'))
+                                asyncio.create_task(self.arm(parsed['passkey'],'SMS'))
                             elif parsed['action'] == 'status':
-                                await self.sendmessage(self.last,fromnr)
+                                await self.sendmessage(self.last,parsed['fromnr'])
                             else:
-                                await self.sendmessage('Message not understood',fromnr)
+                                await self.sendmessage('Message not understood',parsed['fromnr'])
 
                 except: pass # connection and json issues
                 await asyncio.sleep(30)
@@ -286,18 +300,3 @@ if dipswitch[3].value() == 0:
             except: self.armed = False # first run with no last file
 
             logger(f"Starting {self.armed}")
-
-            running = list()
-            running.append(asyncio.create_task(self.poolkeypad()))
-            running.append(asyncio.create_task(self.checksensors()))
-            if localdata.DOORDING is not None:
-                running.append(asyncio.create_task(self.doording()))
-            
-            while True:
-                for task in running:
-                    if task.done():
-                        logger(f'{task} reset needed')
-                        reset() # something went very wrong
-                await asyncio.sleep(5)
-
-            # poolkey.done()
