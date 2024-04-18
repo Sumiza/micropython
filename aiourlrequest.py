@@ -1,4 +1,4 @@
-# VERSION 1.01
+# VERSION 1.02
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/aiourlrequest.py
 
 import json as jsonclass
@@ -16,7 +16,7 @@ class Response():
         self.text = None
         self.status_code = None
         self.status = None
-        self.data  = None
+        self.data  = b''
         self.headers = dict()
 
     def json(self):
@@ -46,6 +46,7 @@ async def aiourlrequest(
         path = ""
     
     headers['HOST'] = host
+    headers['Connection'] = 'Close' # close connection when done or reader can hang
 
     if not headers.get('User-Agent'):
         headers['User-Agent'] = 'aioUrlRequest v1.0'
@@ -94,9 +95,15 @@ async def aiourlrequest(
             break
         line = line.decode().split(':')
         response.headers[line[0]] = ''.join(line[1:]).strip()
-        
-    resdata = await reader.read(readlimit)
-    response.data = resdata
+    
+    while True:
+        chunk = await reader.read(8)
+        if chunk == b'':
+            break
+        if len(response.data) >= readlimit:
+            break
+        response.data += chunk
+
     try:
         response.text = response.data.decode()
     except:
@@ -105,26 +112,29 @@ async def aiourlrequest(
 
     return response
 
-def get(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='GET')
-def post(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='POST')
-def put(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='PUT')
-def delete(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='DELETE')
-def head(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='HEAD')
-def patch(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='PATCH')
+async def get(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='GET')
+async def post(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='POST')
+async def put(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='PUT')
+async def delete(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='DELETE')
+async def head(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='HEAD')
+async def patch(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='PATCH')
 
 if __name__ == '__main__':
     async def demo():
         #import aiourlrequest as requests
-        b = await aiourlrequest('https://webhookbin.net/v1/makebin',
-                            data='',
-                            headers={'jumping':"cow"})
+        b = await aiourlrequest(
+            'https://webhookbin.net/v1/makebin',
+            data='',
+            headers={'jumping':"cow"})
+        
         print(b)
         print(b.json())
         print(b.text)
+        print(b.headers)
     asyncio.run(demo())
