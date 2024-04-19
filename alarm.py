@@ -227,6 +227,8 @@ if dipswitch[3].value() == 0:
                     self.beep(True)
                     curpass += str(pushedkey)
                     await asyncio.sleep(0.2)
+                    if pushedkey == '*':
+                        self.checkconfigkey(curpass)
                     keypass = self.checkkey(curpass)
                     logger(f'pushed key {pushedkey} - curpass: {curpass}, checkkey {keypass}')
                     if keypass:
@@ -235,10 +237,20 @@ if dipswitch[3].value() == 0:
                         elif self.armed is True:
                             asyncio.create_task(self.disarm(keypass,'keypad'))
                         curpass = '!!!!'
-                        break
                     self.beep(False)
                 await asyncio.sleep(0.01)
         
+        def checkconfigkey(self,checkkey:str):
+            for keypass in localdata.USERS.keys():
+                keypass = ''.join([p+'*' for p in keypass])
+                if keypass == checkkey[-len(keypass):]:
+                    self.configreboot()
+                    
+        def configreboot(self):
+            with open('configme','w') as file:
+                file.write('config')
+                reset()
+
         def checkkey(self,checkkey:str):
             for keypass in localdata.USERS.keys():
                 if keypass == checkkey[-len(keypass):]:
