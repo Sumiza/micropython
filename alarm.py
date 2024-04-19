@@ -101,7 +101,7 @@ if dipswitch[3].value() == 0:
                 self.armed = True
                 self.ledred(True)
                 self.writestate('Armed',keypass,armtype)
-                self.notifyadmins()
+                await self.notifyadmins()
                 # Arming Done
         
         async def disarm(self,keypass,armtype):
@@ -110,7 +110,7 @@ if dipswitch[3].value() == 0:
             self.ledgreen(True)
             self.beep(False)
             self.writestate('Disarmed',keypass,armtype)
-            self.notifyadmins()
+            await self.notifyadmins()
             # Disarm Done
         
         def writestate(self,arm,keypass,armtype):
