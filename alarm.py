@@ -86,7 +86,6 @@ if dipswitch[3].value() == 0:
     
         async def arm(self,keypass,armtype):
             logger(f'arm {keypass} {armtype}')
-            self.armed = True
             await asyncio.sleep(0.2) # wait for keypad to finish
             for _ in range(localdata.PINTIME):
                 if self.armed is True:
@@ -97,11 +96,13 @@ if dipswitch[3].value() == 0:
                     self.ledgreen(False)
                     await asyncio.sleep(0.5)
                 else:
-                    return #stopped arming
-            self.ledred(True)
-            self.writestate('Armed',keypass,armtype)
-            self.notifyadmins()
-            # Arming Done
+                    break #stopped arming
+            else:
+                self.armed = True
+                self.ledred(True)
+                self.writestate('Armed',keypass,armtype)
+                self.notifyadmins()
+                # Arming Done
         
         async def disarm(self,keypass,armtype):
             logger(f'disarm {keypass} {armtype}')
@@ -185,7 +186,7 @@ if dipswitch[3].value() == 0:
         
         async def scansensors(self) -> None|int:
             for pin, pinvalue in self.sensorpins.items():
-                if pinvalue.value() == 0:
+                if pinvalue.value() == 1:
                     return pin
                 await asyncio.sleep(0) #TODO test blocking
             return None
@@ -195,7 +196,7 @@ if dipswitch[3].value() == 0:
             logger('Starting doording')
             while True:
                 if self.armed is False:
-                    if self.sensorpins[localdata.DOORDING].value() == 0 and doortoggle is False:
+                    if self.sensorpins[localdata.DOORDING].value() == 1 and doortoggle is False:
                         logger(f'door opened {self.sensorpins[localdata.DOORDING].value()} {doortoggle}')
                         doortoggle = True
                         for _ in range(4):
@@ -203,7 +204,7 @@ if dipswitch[3].value() == 0:
                             await asyncio.sleep(0.1)
                             self.beep(False)
                             await asyncio.sleep(0.1)
-                    elif self.sensorpins[localdata.DOORDING].value() == 1 and doortoggle is True:
+                    elif self.sensorpins[localdata.DOORDING].value() == 0 and doortoggle is True:
                         logger(f'door closed {self.sensorpins[localdata.DOORDING].value()} {doortoggle}')
                         doortoggle = False
                 await asyncio.sleep(1)
@@ -320,6 +321,7 @@ if dipswitch[3].value() == 0:
 
                 except Exception as e:
                     logger(e) # connection and json issues
+                    pass
                 finally:
                     await asyncio.sleep(30)
                         
