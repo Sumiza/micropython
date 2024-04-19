@@ -248,6 +248,8 @@ if dipswitch[3].value() == 0:
 
             def parsesms(message:str) -> dict:
                 try:
+                    if message['data']['event_type'] != 'message.received':
+                        return None
                     parseresponse = dict() 
                     parseresponse['fromnr'] = message['data']['payload']['from']['phone_number']
                     text = message['data']['payload']['text']
@@ -259,44 +261,92 @@ if dipswitch[3].value() == 0:
 
             def checkuser(parsed:dict) -> bool:
                 if self.checkkey(parsed['passkey']) is None:
+                    logger('failed key')
                     return False
                 if localdata.USERS[parsed['passkey']]['Admin'] is not True:
+                    logger('failed admin')
                     return False
                 if localdata.USERS[parsed['passkey']]['Phonenr'] != parsed['fromnr']:
+                    logger('failed from nr')
                     return False
                 return True
-                
-            await asyncio.sleep(localdata.PINTIME/2) # wait for startup and trigger before countdown
+
+            await asyncio.sleep(localdata.PINTIME/2) # trigger before pin trigger
             while True:
                 try:
-                    res = await aiourlrequest.get(localdata.TELNYXGETURL)
+                    res = await aiourlrequest.aiourlrequest(localdata.TELNYXGETURL)
                     res = res.json()
                     res = res.get('content',None)
-                    if res:
-                        parsed = parsesms(res)
-                        if checkuser(parsed):
-                            if parsed['action'] == 'disarm':
-                                asyncio.create_task(self.disarm(parsed['passkey'],'SMS'))
-                            elif parsed['action'] == 'arm':
-                                asyncio.create_task(self.arm(parsed['passkey'],'SMS'))
-                            elif parsed['action'] == 'status':
-                                await self.sendmessage(self.last,parsed['fromnr'])
-                            else:
-                                await self.sendmessage('Message not understood',parsed['fromnr'])
+                    logger(res)
+                    if res is None:
+                        continue
+                    parsed = parsesms(res)
+                    if parsed is None:
+                        continue
+                    logger(parsed)
+                    if checkuser(parsed) is False:
+                        continue
 
-                except: pass # connection and json issues
-                await asyncio.sleep(30)
+                    if parsed['action'] == 'disarm':
+                        asyncio.create_task(self.disarm(parsed['passkey'],'SMS'))
+                        logger('disarming')
+                    elif parsed['action'] == 'arm':
+                        asyncio.create_task(self.arm(parsed['passkey'],'SMS'))
+                        logger('arming')
+                    elif parsed['action'] == 'status':
+                        await self.sendmessage(self.last,parsed['fromnr'])
+                        logger('status')
+                    else:
+                        await self.sendmessage('Message not understood',parsed['fromnr'])
+                        logger('other')
+
+                except Exception as e:
+                    logger(e) # connection and json issues
+                finally:
+                    await asyncio.sleep(30)
                         
         async def main(self):
             try:
                 with open('last','r') as file:
-                    laststatus = file.read().split()[1]
+                    self.last = file.read().strip()
+                    laststatus = self.last.split()[1]
                     if laststatus == 'Armed':
                         self.armed = True
                         self.ledred(True)
                     elif laststatus == 'Disarmed':
                         self.armed = False
                         self.ledgreen(True)
-            except: self.armed = False # first run with no last file
+            except: 
+                self.armed = False # first run with no last file
+                self.last = 'No last status found'
 
             logger(f"Starting {self.armed}")
+
+            running = list()
+            running.append(asyncio.create_task(self.getsms()))
+            running.append(asyncio.create_task(self.poolkeypad()))
+            running.append(asyncio.create_task(self.checksensors()))
+            if localdata.DOORDING is not None:
+                running.append(asyncio.create_task(self.doording()))
+            
+            while True:
+                for task in running:
+                    if task.done():
+                        logger(f'{task} reset needed')
+                        reset() # something went very wrong
+                await asyncio.sleep(5)
+
+            # poolkey.done()
+            # runme = [self.poolkeypad()]
+            # await asyncio.gather(
+            #     self.poolkeypad()
+            #     ) # run forever
+
+    alarm = Alarm('4x4')
+    asyncio.run(alarm.main())
+
+        # async def armtoggle(self,keypass,armtype):
+        #     if self.armed is False:
+        #         self.arm(keypass,armtype)
+        #     elif self.armed is True:
+        #         self.disarm(keypass,armtype)
