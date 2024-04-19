@@ -300,11 +300,17 @@ if dipswitch[3].value() == 0:
                         continue
 
                     if parsed['action'] == 'disarm':
-                        asyncio.create_task(self.disarm(parsed['passkey'],'SMS'))
-                        logger('disarming')
+                        if self.armed is True:
+                            asyncio.create_task(self.disarm(parsed['passkey'],'SMS'))
+                            logger('disarming')
+                        else:
+                            await self.sendmessage(self.last,parsed['fromnr'])
                     elif parsed['action'] == 'arm':
-                        asyncio.create_task(self.arm(parsed['passkey'],'SMS'))
-                        logger('arming')
+                        if self.armed is False:
+                            asyncio.create_task(self.arm(parsed['passkey'],'SMS'))
+                            logger('arming')
+                        else:
+                            await self.sendmessage(self.last,parsed['fromnr'])
                     elif parsed['action'] == 'status':
                         await self.sendmessage(self.last,parsed['fromnr'])
                         logger('status')
