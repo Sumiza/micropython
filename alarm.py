@@ -140,7 +140,7 @@ if dipswitch[3].value() == 0:
             while self.armed is True:
                 self.hornpin.value(1)
                 sendcount -= 1
-                if sendevery <= 0:
+                if sendcount <= 0:
                     asyncio.create_task(self.sendalarm(whichpin))
                     sendcount = sendevery
                 await asyncio.sleep(1)
@@ -150,10 +150,8 @@ if dipswitch[3].value() == 0:
             for values in localdata.USERS.values():
                 if values['Admin'] is True:
                     logger(f'sendalarm to {values['Phonenr']}')
-                    a = await self.sendmessage(f"Alarm trigged on {localdata.SENSORS[whichpin]}",values['Phonenr'])
-                    logger(a.text)
-                    a = await self.call(values['Phonenr'])
-                    logger(a.text)
+                    await self.sendmessage(f"Alarm trigged on {localdata.SENSORS[whichpin]}",values['Phonenr'])
+                    await self.call(values['Phonenr'])
         
         async def sendmessage(self,message,number):
             logger(f'trigger sendmessage {message} {number}')
