@@ -88,7 +88,7 @@ if dipswitch[3].value() == 0:
             logger(f'arm {keypass} {armtype}')
             await asyncio.sleep(0.2) # wait for keypad to finish
             for _ in range(localdata.PINTIME):
-                if self.armed is True:
+                if self.armed is False:
                     self.beep(True)
                     self.ledgreen(True)
                     await asyncio.sleep(0.5)
@@ -149,8 +149,11 @@ if dipswitch[3].value() == 0:
         async def sendalarm(self,whichpin):
             for values in localdata.USERS.values():
                 if values['Admin'] is True:
-                    await self.sendmessage(f"Alarm trigged on {localdata.SENSORS[whichpin]}",values['Phonenr'])
-                    await self.call(values['Phonenr'])
+                    logger(f'sendalarm to {values['Phonenr']}')
+                    a = await self.sendmessage(f"Alarm trigged on {localdata.SENSORS[whichpin]}",values['Phonenr'])
+                    logger(a.text)
+                    a = await self.call(values['Phonenr'])
+                    logger(a.text)
         
         async def sendmessage(self,message,number):
             logger(f'trigger sendmessage {message} {number}')
@@ -207,7 +210,7 @@ if dipswitch[3].value() == 0:
                     elif self.sensorpins[localdata.DOORDING].value() == 0 and doortoggle is True:
                         logger(f'door closed {self.sensorpins[localdata.DOORDING].value()} {doortoggle}')
                         doortoggle = False
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.1)
 
         async def checksensors(self):
             logger('Starting checksensor')
