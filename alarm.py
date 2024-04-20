@@ -49,6 +49,7 @@ if dipswitch[3].value() == 0:
             self.armed = None
             self.last = None
             self.keypad = MatrixKeypad(keytype)
+            self.arming = False
 
             #set pins
             # self.sensorpins = {sensor:Pin(sensor,Pin.IN,Pin.PULL_UP) for sensor,name in localdata.SENSORS.items()}
@@ -87,8 +88,9 @@ if dipswitch[3].value() == 0:
         async def arm(self,keypass,armtype):
             logger(f'arm {keypass} {armtype}')
             await asyncio.sleep(0.2) # wait for keypad to finish
+            self.arming = True
             for _ in range(localdata.PINTIME):
-                if self.armed is False:
+                if self.armed is False and self.arming is True:
                     self.beep(True)
                     self.ledgreen(True)
                     await asyncio.sleep(0.5)
@@ -98,6 +100,7 @@ if dipswitch[3].value() == 0:
                 else:
                     break #stopped arming
             else:
+                self.arming = False
                 self.armed = True
                 self.ledred(True)
                 self.writestate('Armed',keypass,armtype)
@@ -106,6 +109,7 @@ if dipswitch[3].value() == 0:
         
         async def disarm(self,keypass,armtype):
             logger(f'disarm {keypass} {armtype}')
+            self.arming = False
             self.armed = False
             self.ledgreen(True)
             self.beep(False)
@@ -228,16 +232,16 @@ if dipswitch[3].value() == 0:
                 if pushedkey is not None:
                     self.beep(True)
                     curpass += str(pushedkey)
-                    await asyncio.sleep(0.2)
+                    await asyncio.sleep(0.3)
                     if pushedkey == '*':
                         self.checkconfigkey(curpass)
                     keypass = self.checkkey(curpass)
                     logger(f'pushed key {pushedkey} - curpass: {curpass}, checkkey {keypass}')
                     if keypass:
-                        if self.armed is False:
-                            asyncio.create_task(self.arm(keypass,'keypad'))
-                        elif self.armed is True:
+                        if self.armed is True or self.arming is True:
                             asyncio.create_task(self.disarm(keypass,'keypad'))
+                        elif self.armed is False:
+                            asyncio.create_task(self.arm(keypass,'keypad'))
                         curpass = '!!!!'
                     self.beep(False)
                 await asyncio.sleep(0.01)
