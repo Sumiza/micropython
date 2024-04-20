@@ -98,6 +98,7 @@ if dipswitch[3].value() == 0:
                     self.ledgreen(False)
                     await asyncio.sleep(0.5)
                 else:
+                    self.arming = False
                     break #stopped arming
             else:
                 self.arming = False
