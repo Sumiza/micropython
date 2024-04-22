@@ -1,4 +1,4 @@
-# VERSION 1.03
+# VERSION 1.04
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/wifi.py
  
 import network
