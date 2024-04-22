@@ -33,6 +33,11 @@ class Wifi():
                 self.wifiled.off()
  
     def connect(self,ssid=None,password=None):
+
+        if (ssid is None and 
+            password is None and 
+            self.isconnected() is True):
+            return True
  
         if self.ssid is None:
             self.ssid = ssid
@@ -68,8 +73,9 @@ class Wifi():
         return True
  
     def isconnected(self):
-        self.led(selfcheck=True)
-        return self.wlan.isconnected()
+        connected = self.wlan.isconnected()
+        self.led(onoff=connected)
+        return connected
  
     def scan(self):
         return self.wlan.scan()
