@@ -10,8 +10,8 @@ keypad4x4 = {'pad':[
     [4,  5,  6,  'B'],
     [7,  8,  9,  'C'],
     ['*',0,  '#','D']],
-    'column':[3,2,1,0],
-    'row':[7,6,5,4]}
+    'column':[0,1,2,3],
+    'row':[4,5,6,7]}
 
 #pintout membrane r1 r2 r3 r4 c1 c2 c3
 #pinout 3845 c2 r1 c1 r4 c3 r3 r2
@@ -21,8 +21,8 @@ keypad3x4 = {'pad':[
     [4,  5,  6],
     [7,  8,  9],
     ['*',0,  '#']],
-    'column':[2,1,0],
-    'row':[6,5,4,3]}
+    'column':[0,1,2],
+    'row':[3,4,5,6]}
 
 class MatrixKeypad():
     def __init__(self,padtype) -> None:
