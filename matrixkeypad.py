@@ -1,4 +1,4 @@
-# VERSION 1.0
+# VERSION 1.01
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/matrixkeypad.py
 
 import machine
