@@ -22,14 +22,14 @@ async def blink(led='LED',every=0.5):
 
 async def demo():
     while True:
-        b = await aiourlrequest(
+        b = await aiourlrequest.get(
             'https://webhookbin.net/v1/makebin',
             data='',
             headers={'jumping':"cow"})
         
         print(b.text)
         # gc.collect()
-        asyncio.sleep(5)
+        await asyncio.sleep(5)
 
 def runme():
     asyncio.create_task(blink())
