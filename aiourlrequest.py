@@ -1,4 +1,4 @@
-# VERSION 1.02
+# VERSION 1.03
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/aiourlrequest.py
 
 import json as jsonclass
@@ -33,7 +33,7 @@ async def aiourlrequest(
                 headers:dict = None,
                 readlimit:int = 5000,
                 ssl = None,
-                timeout:float = 10 #TODO
+                timeout:float = 10
                 ):
 
     if headers is None:
@@ -49,7 +49,7 @@ async def aiourlrequest(
     headers['Connection'] = 'Close' # close connection when done or reader can hang
 
     if not headers.get('User-Agent'):
-        headers['User-Agent'] = 'aioUrlRequest v1.0'
+        headers['User-Agent'] = 'aioUrlRequest v1.03'
 
     if json:
         headers['Content-Type'] = 'application/json'
@@ -77,12 +77,12 @@ async def aiourlrequest(
         else:
             raise ValueError("Unsupported: " + proto)
 
-    reader, writer = await asyncio.open_connection(host, port, ssl=ssl)
+    reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port, ssl=ssl),timeout)
     query = f'{method} /{path} HTTP/1.1\r\n{headers}{data}\r\n\r\n'.encode()
     writer.write(query)
-    await writer.drain()
+    await asyncio.wait_for(writer.drain(),timeout)
 
-    firstline = await reader.readline()
+    firstline = await asyncio.wait_for(reader.readline(),timeout)
     firstline = firstline.decode().split(' ')
 
     response = Response()
@@ -90,14 +90,14 @@ async def aiourlrequest(
     response.status = firstline[2]
 
     while True:
-        line = await reader.readline()
+        line = await asyncio.wait_for(reader.readline(),timeout)
         if line == b'' or line == b'\r\n':
             break
         line = line.decode().split(':')
         response.headers[line[0]] = ''.join(line[1:]).strip()
     
     while True:
-        chunk = await reader.read(8)
+        chunk = await asyncio.wait_for(reader.read(8),timeout)
         if chunk == b'':
             break
         if len(response.data) >= readlimit:
