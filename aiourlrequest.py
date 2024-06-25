@@ -1,4 +1,4 @@
-# VERSION 1.03
+# VERSION 1.04
 # URL https://raw.githubusercontent.com/Sumiza/micropython/main/aiourlrequest.py
 
 import json as jsonclass
@@ -112,18 +112,18 @@ async def aiourlrequest(
 
     return response
 
-async def get(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='GET')
-async def post(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='POST')
-async def put(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='PUT')
-async def delete(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='DELETE')
-async def head(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='HEAD')
-async def patch(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None):
-    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='PATCH')
+async def get(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None, timeout = 10):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='GET', timeout=timeout)
+async def post(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None, timeout = 10):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='POST', timeout=timeout)
+async def put(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None, timeout = 10):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='PUT', timeout=timeout)
+async def delete(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None, timeout = 10):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='DELETE', timeout=timeout)
+async def head(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None, timeout = 10):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='HEAD', timeout=timeout)
+async def patch(url:str, data:str = None, json:dict = None, headers:dict = None, readlimit:int = 5000, ssl = None, timeout = 10):
+    return await aiourlrequest(url=url, data=data, json=json, headers=headers, readlimit=readlimit, ssl=ssl, method='PATCH', timeout=timeout)
 
 if __name__ == '__main__':
     async def demo():
